@@ -18,6 +18,7 @@ Vagrant.configure(2) do |config|
       v.cpus = 2
     end
     kmaster.vm.provision "shell", path: "bootstrap_kmaster.sh"
+    kmaster.vm.provision "shell", path: "kmaster_metrics_server.sh"
   end
 
   NodeCount = 2
