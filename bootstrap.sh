@@ -10,7 +10,7 @@ EOF
 
 # Install docker from Docker-ce repository
 echo "[TASK 2] Install docker container engine"
-yum install -y -q yum-utils device-mapper-persistent-data lvm2 vim > /dev/null 2>&1
+yum install -y -q yum-utils device-mapper-persistent-data lvm2 > /dev/null 2>&1
 wget https://raw.githubusercontent.com/theJaxon/K8s-Vagrant/master/repo/docker-ce.repo -P /etc/yum.repos.d/
 yum repolist
 yum install -y -q docker-ce >/dev/null 2>&1
