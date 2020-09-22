@@ -77,8 +77,6 @@ spec:
         k8s-app: metrics-server
     spec:
       serviceAccountName: metrics-server
-      hostNetwork: true
-      restartPolicy: Always
       volumes:
       # mount in tmp so we can safely use from-scratch images and/or read-only containers
       - name: tmp-dir
@@ -91,8 +89,7 @@ spec:
           - --cert-dir=/tmp
           - --secure-port=4443
           - --kubelet-insecure-tls=true
-          - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
-          - --metric-resolution=30s
+          - --kubelet-preferred-address-types=InternalIP
         ports:
         - name: main-port
           containerPort: 4443
