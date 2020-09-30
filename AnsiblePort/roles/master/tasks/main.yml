@@ -1,0 +1,37 @@
+---
+# tasks file for roles/master
+- name: Initialize kubernetes cluster 
+  shell: "kubeadm init --apiserver-advertise-address=192.168.50.210 --pod-network-cidr=192.168.0.0/16 >> /root/kubeinit.log"
+  ignore_errors: True 
+
+- name: create .kube directory 
+  file:
+    state: directory 
+    path: /home/vagrant/.kube 
+
+- name: Change admin.conf ownership # Problem with the copy module [1] 
+  file:
+    path: /etc/kubernetes/admin.conf 
+    mode: '0666'
+
+- name: copy admin config file 
+  copy: 
+    src: /etc/kubernetes/admin.conf 
+    dest: /home/vagrant/.kube/config 
+  
+- name: change .kube directory ownership 
+  file: 
+    path: /home/vagrant/.kube 
+    owner: vagrant 
+    group: vagrant 
+    recurse: True 
+
+- name: Deploy flannel network 
+  shell: "kubectl create -f https://docs.projectcalico.org/v3.9/manifests/calico.yaml"
+  become: True 
+  become_user: vagrant 
+
+- name: Generate and save cluster join command to /joincluster.sh
+  shell: "kubeadm token create --print-join-command > /joincluster.sh"
+
+# Privilege escalation with copy takes place only on the target OS not on the controller so it will fail even with privilege escalation because of the file permissions

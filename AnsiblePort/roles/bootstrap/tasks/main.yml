@@ -1,0 +1,99 @@
+---
+# tasks file for roles/bootstrap
+- name: Install required packages 
+  yum:
+    name:
+    - yum-utils
+    - device-mapper-persistent-data
+    - lvm2
+    state: latest 
+
+- name: Add docker-ce and kubernetes repos 
+  yum_repository:
+    name: "{{ item.name }}"
+    description: "{{ item.description }}"
+    baseurl: "{{ item.baseurl }}"
+    gpgcheck: True 
+    gpgkey: "{{ item.gpgkey }}"
+    repo_gpgcheck: "{{ item.repo_gpgcheck }}"
+    enabled: True 
+  loop: "{{ container_repos }}"
+
+- name: Disable SELinux 
+  lineinfile:
+    path: /etc/sysconfig/selinux
+    regexp: '^SELINUX=enforcing'
+    line: 'SELINUX=disabled'
+
+- name: Disable firewalld service 
+  service:
+    name: firewalld 
+    state: stopped
+    enabled: False 
+
+- name: Install docker-ce and kubernetes components 
+  ignore_errors: True 
+  yum: 
+    name: 
+    - docker-ce
+    - kubeadm 
+    - kubelet 
+    - kubectl 
+    state: latest 
+
+- name: Add user vagrant to docker group 
+  user:
+    name: vagrant 
+    groups: docker 
+    append: True 
+
+- name: Enable and start docker and kubelet service 
+  service:
+    name: "{{ item }}"
+    state: started 
+    enabled: True 
+  loop:
+  - docker 
+  - kubelet 
+
+- name: create kubernetes config file 
+  file:
+    state: touch 
+    path: "{{ k8s_conf_file }}"
+
+- name: Add sysctl settings 
+  blockinfile:
+    block: |
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.bridge.bridge-nf-call-iptables = 1
+    path: "{{ k8s_conf_file }}"
+
+- name: read the newly added values in {{ k8s_conf_file }}
+  command: "sysctl --system"
+
+- name: remove swap line from /etc/fstab
+  lineinfile:
+    state: absent 
+    regexp: 'swap'
+    path: /etc/fstab 
+
+- name: disable swap 
+  command: "swapoff -a"
+
+- name: Enable ssh password authentication
+  lineinfile:
+    regexp: '^PasswordAuthentication no'
+    line: 'PasswordAuthentication yes'
+    path: /etc/ssh/sshd_config
+
+- name: reload sshd service 
+  service:
+    name: sshd 
+    state: restarted 
+    enabled: True  
+
+- name: change root password 
+  user:
+    name: root 
+    password: "{{ root_pass | password_hash('sha512') }}"
+    
