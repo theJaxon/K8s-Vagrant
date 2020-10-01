@@ -1,8 +1,24 @@
 ---
 # tasks file for roles/master
-- name: Initialize kubernetes cluster 
-  shell: "kubeadm init --apiserver-advertise-address=192.168.50.210 --pod-network-cidr=192.168.0.0/16 >> /root/kubeinit.log"
-  ignore_errors: True 
+- name: Check if kubernetes is working 
+  block:
+  - name: Check kubernetes status 
+    shell: 'kubectl cluster-info | sed "s/\x1B\[[0-9;]\{1,\}[A-Za-z]//g"' # The sed part is added to remove ANSI color codes from the output [1]
+    register: kubernetes_status
+    become: True 
+    become_user: vagrant
+
+  - name: check if kubernetes is up and running 
+    assert:
+      that: 
+        - kubernetes_status.stdout.find('Kubernetes master is running') != -1
+        - kubernetes_status.stdout.find('KubeDNS is running') != -1 
+      success_msg: "Kubernetes is running"
+      fail_msg: "Kubernetes cluster isn't working"
+  
+  rescue:
+  - name: Initialize kubernetes cluster 
+    shell: "kubeadm init --apiserver-advertise-address=192.168.50.210 --pod-network-cidr=192.168.0.0/16 >> /root/kubeinit.log"
 
 - name: create .kube directory 
   file:
@@ -26,12 +42,45 @@
     group: vagrant 
     recurse: True 
 
-- name: Deploy flannel network 
-  shell: "kubectl create -f https://docs.projectcalico.org/v3.9/manifests/calico.yaml"
+- name: Check calico network pods 
+  block:
+  - name: get the status of calico pods 
+    shell: "{{ item }}"
+    loop:
+    - kubectl get po -n kube-system -o custom-columns=POD:.metadata.name,STATE:.status.phase | grep calico-kube | awk -F' ' '{print $2}'
+    - kubectl get po -n kube-system -o custom-columns=POD:.metadata.name,STATE:.status.phase | grep calico-node | awk -F' ' '{print $2}'
+    register: calico_var 
+    become: True 
+    become_user: vagrant
+
+  - name: Verify pods are running 
+    assert:
+      that:
+        - calico_var.results[0].stdout == "Running"
+        - calico_var.results[1].stdout == "Running"
+      success_msg: "Calico is running successfully"
+      fail_msg: "Calico isn't functioning properly"
+
+  rescue:
+  - name: Deploy calico network 
+    shell: "kubectl create -f https://docs.projectcalico.org/v3.9/manifests/calico.yaml"
+    become: True 
+    become_user: vagrant 
+
+  - name: Generate and save cluster join command to /joincluster.sh
+    shell: "kubeadm token create --print-join-command > /joincluster.sh"
+
+
+- name: download metrics-server components file 
+  get_url:
+    url: https://raw.githubusercontent.com/theJaxon/K8s-Vagrant/master/metrics-server/components.yaml
+    dest: /home/vagrant/
+
+- name: Deploy the components file 
+  shell: "kubectl apply -f /home/vagrant/components.yaml"
   become: True 
-  become_user: vagrant 
+  become_user: vagrant
 
-- name: Generate and save cluster join command to /joincluster.sh
-  shell: "kubeadm token create --print-join-command > /joincluster.sh"
+  # Privilege escalation with copy takes place only on the target OS not on the controller so it will fail even with privilege escalation because of the file permissions
 
-# Privilege escalation with copy takes place only on the target OS not on the controller so it will fail even with privilege escalation because of the file permissions
+  # 1- https://stackoverflow.com/a/51141872
