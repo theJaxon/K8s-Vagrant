@@ -1,5 +1,13 @@
 ---
 # tasks file for roles/master
+- name: restart both kubelet and docker services 
+  service:
+    name: "{{ item }}"
+    state: restarted 
+  loop:
+  - docker 
+  - kubelet 
+
 - name: Check if kubernetes is working 
   block:
   - name: Check kubernetes status 
@@ -18,8 +26,11 @@
   
   rescue:
   - name: Initialize kubernetes cluster 
-    shell: "kubeadm init --apiserver-advertise-address=192.168.50.210 --pod-network-cidr=192.168.0.0/16 >> /root/kubeinit.log"
-
+    shell: "kubeadm init --apiserver-advertise-address=192.168.50.210 --pod-network-cidr=192.168.0.0/16 >> /home/vagrant/kubeinit.log"
+    async: 180 # wait for three minutes till timeout 
+    poll: 20 # check every 20 seconds
+    ignore_errors: True # continue tasks after timeout
+    
 - name: create .kube directory 
   file:
     state: directory 
