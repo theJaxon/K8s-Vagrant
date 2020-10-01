@@ -1,0 +1,16 @@
+---
+# Configure master server 
+- hosts: localhost 
+  roles:
+  - bootstrap
+  - master
+
+- hosts: worker1,worker2
+  roles:
+  - bootstrap 
+  - worker 
+
+- hosts: localhost # Optional
+  roles:
+#  - metrics-server
+  - portainer 

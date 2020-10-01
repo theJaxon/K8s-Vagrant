@@ -3,10 +3,10 @@ NUMBER_OF_WORKERS_TO_INT = NUMBER_OF_WORKERS.to_i
 Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/vagrant", type: "rsync"
   config.vm.box_check_update = false
-
   config.vm.provision "shell", inline: <<-SHELL
   # Install python on all machines
-  sudo yum module install -y python36
+  sudo yum module install -y python36 
+  sudo yum install -y epel-release && sudo yum install -y sshpass
   SHELL
 
   (1..NUMBER_OF_WORKERS_TO_INT).each do |i|
@@ -23,6 +23,20 @@ Vagrant.configure("2") do |config|
         end
         v.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', file_for_disk]
       end
+
+      # Script for worker nodes 
+      worker.vm.provision "shell", inline: <<-SHELL
+      export NUMBER_OF_WORKERS=#{ENV['NUMBER_OF_WORKERS']} 
+      echo "Populating /etc/hosts"
+      # Add Master node IP address
+      echo "192.168.50.210 master master.com" >> /etc/hosts 
+
+      for((i=1; i<=$NUMBER_OF_WORKERS; i++));
+        do
+          sudo echo "192.168.50.21$i worker$i worker$i.com" >> /etc/hosts
+        done
+      SHELL
+      
     end
   end
 
@@ -30,6 +44,7 @@ Vagrant.configure("2") do |config|
     master.vm.box = "bento/centos-8"
     master.vm.hostname = "master"
     master.vm.network "private_network", ip: "192.168.50.210"
+    master.vm.network "forwarded_port", guest: 9000, host: 9888 # Portainer
 
     # Set CPU and memory 
     master.vm.provider :virtualbox do |vb|
@@ -43,13 +58,14 @@ Vagrant.configure("2") do |config|
     echo "[all]" >> /home/vagrant/inventory    
     
     echo "[TASK 2] Populate both /etc/hosts and inventory"
+    echo "192.168.50.210 master master.com" >> /etc/hosts 
     for((i=1; i<=$NUMBER_OF_WORKERS; i++));
     do
       sudo echo "192.168.50.21$i worker$i" >> /etc/hosts
       echo "worker$i" >> /home/vagrant/inventory
     done
     
-    sudo yum install -y epel-release && sudo yum install -y ansible jq vim sshpass
+     sudo yum install -y ansible jq vim
 
     # [1] [5]
     sudo -u vagrant /bin/sh << 'VAGRANT_USER'

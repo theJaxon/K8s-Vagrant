@@ -1,0 +1,3 @@
+---
+# vars file for metrics-server
+metrics_file: /home/vagrant/metrics-server.yml 

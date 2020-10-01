@@ -37,15 +37,26 @@
     state: stopped
     enabled: False 
 
-- name: Install docker-ce and kubernetes components 
-  ignore_errors: True 
-  yum: 
-    name: 
-    - docker-ce
-    - kubeadm 
-    - kubelet 
-    - kubectl 
-    state: latest 
+- name: Gather package facts 
+  package_facts:
+    manager: auto 
+
+- name: Download container packages if not present
+  block:
+    - name: Check if kubernetes and docker packages are installed 
+      assert:
+        that:
+        - ansible_facts['packages'][item][0] is defined
+        success_msg: "{{ ansible_facts['packages'][item][0]['name'] }} is already installed"
+        fail_msg: "{{ ansible_facts['packages'][item][0]['name'] }} is missing"
+      loop: "{{ container_packages }}"
+  rescue:
+    - name: Install docker-ce and kubernetes components 
+      yum: 
+        name: "{{ container_packages }}" 
+        state: latest 
+        disable_excludes: kubernetes
+
 
 - name: Add user vagrant to docker group 
   user:

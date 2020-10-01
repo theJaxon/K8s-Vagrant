@@ -1,0 +1,11 @@
+---
+# tasks file for metrics-server
+- name: download metrics-server components file 
+  get_url:
+    url: https://raw.githubusercontent.com/theJaxon/K8s-Vagrant/master/metrics-server/components.yaml
+    dest: "{{ metrics_file }}"
+
+- name: Deploy the components file 
+  shell: "kubectl apply -f {{ metrics_file }}"
+  become: True 
+  become_user: vagrant

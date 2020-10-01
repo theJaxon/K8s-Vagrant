@@ -16,6 +16,13 @@ container_repos:
     gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
     exclude: kubelet kubeadm kubectl
 
+container_packages:
+  - docker-ce 
+  - kubeadm 
+  - kubelet
+  - kubectl
+
 k8s_conf_file: /etc/sysctl.d/kubernetes.conf 
 
 root_pass: kubeadmin
+

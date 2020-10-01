@@ -1,0 +1,16 @@
+---
+# tasks file for worker
+- name: Join the cluster 
+  shell: 'sshpass -p "kubeadmin" scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no master.com:/joincluster.sh /joincluster.sh 2>/dev/null'
+
+- name: Join the cluster 
+  block:
+    - name: Run cluster join script 
+      script: "/joincluster.sh"
+      register: join_cluster_var
+  rescue:
+    - name: cluster already joined 
+      debug:
+        msg: "cluster already joined"
+      when: join_cluster_var.rc == 1
+

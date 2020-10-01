@@ -44,11 +44,8 @@
 
 - name: Check calico network pods 
   block:
-  - name: get the status of calico pods 
-    shell: "{{ item }}"
-    loop:
-    - kubectl get po -n kube-system -o custom-columns=POD:.metadata.name,STATE:.status.phase | grep calico-kube | awk -F' ' '{print $2}'
-    - kubectl get po -n kube-system -o custom-columns=POD:.metadata.name,STATE:.status.phase | grep calico-node | awk -F' ' '{print $2}'
+  - name: get the status of calico  
+    shell: "kubectl get po -n kube-system -o custom-columns=POD:.metadata.name,STATE:.status.phase | grep calico-kube | awk -F ' ' '{print $2}'"
     register: calico_var 
     become: True 
     become_user: vagrant
@@ -56,8 +53,7 @@
   - name: Verify pods are running 
     assert:
       that:
-        - calico_var.results[0].stdout == "Running"
-        - calico_var.results[1].stdout == "Running"
+        - calico_var.stdout == "Running"
       success_msg: "Calico is running successfully"
       fail_msg: "Calico isn't functioning properly"
 
@@ -69,17 +65,6 @@
 
   - name: Generate and save cluster join command to /joincluster.sh
     shell: "kubeadm token create --print-join-command > /joincluster.sh"
-
-
-- name: download metrics-server components file 
-  get_url:
-    url: https://raw.githubusercontent.com/theJaxon/K8s-Vagrant/master/metrics-server/components.yaml
-    dest: /home/vagrant/
-
-- name: Deploy the components file 
-  shell: "kubectl apply -f /home/vagrant/components.yaml"
-  become: True 
-  become_user: vagrant
 
   # Privilege escalation with copy takes place only on the target OS not on the controller so it will fail even with privilege escalation because of the file permissions
 

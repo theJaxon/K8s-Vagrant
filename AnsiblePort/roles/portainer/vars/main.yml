@@ -1,0 +1,6 @@
+---
+# vars file for portainer
+portainer_v: portainer_data
+portainer_image: portainer/portainer-ce
+host_port: 9000
+container_port: 9000
