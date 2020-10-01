@@ -7,13 +7,15 @@ container_repos:
     baseurl: https://download.docker.com/linux/centos/8/$basearch/stable/
     repo_gpgcheck: False
     gpgkey: https://download.docker.com/linux/centos/gpg
+    
   - name: kubernetes
     file: kubernetes
     description: Kubernetes
     baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
     repo_gpgcheck: True 
     gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-  
+    exclude: kubelet kubeadm kubectl
+
 k8s_conf_file: /etc/sysctl.d/kubernetes.conf 
 
 root_pass: kubeadmin
