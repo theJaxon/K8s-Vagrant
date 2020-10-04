@@ -13,7 +13,7 @@ Vagrant.configure("2") do |config|
     config.vm.define "worker-#{i}" do |worker|
       worker.vm.box = "bento/centos-8"
       worker.vm.hostname = "worker-#{i}"
-      worker.vm.network "private_network", ip: "192.168.50.#{i + 210}"
+      worker.vm.network "private_network", ip: "172.42.42.10#{i}"
       # Create & attach a 5GiB disk to each node machine
       file_for_disk = "./large_disk#{i}.vdi"
       worker.vm.provider "virtualbox" do |v|
@@ -29,11 +29,11 @@ Vagrant.configure("2") do |config|
       export NUMBER_OF_WORKERS=#{ENV['NUMBER_OF_WORKERS']} 
       echo "Populating /etc/hosts"
       # Add Master node IP address
-      echo "192.168.50.210 master master.com" >> /etc/hosts 
+      echo "172.42.42.100 master master.com" >> /etc/hosts 
 
       for((i=1; i<=$NUMBER_OF_WORKERS; i++));
         do
-          sudo echo "192.168.50.21$i worker$i worker$i.com" >> /etc/hosts
+          sudo echo "172.42.42.10$i worker$i worker$i.com" >> /etc/hosts
         done
       SHELL
       
@@ -43,8 +43,8 @@ Vagrant.configure("2") do |config|
   config.vm.define "master" do |master|
     master.vm.box = "bento/centos-8"
     master.vm.hostname = "master"
-    master.vm.network "private_network", ip: "192.168.50.210"
-    master.vm.network "forwarded_port", guest: 9000, host: 9888 # Portainer
+    master.vm.network "private_network", ip: "172.42.42.100"
+    master.vm.network "forwarded_port", guest: 9000, host: 9000 # Portainer
 
     # Set CPU and memory 
     master.vm.provider :virtualbox do |vb|
@@ -58,10 +58,10 @@ Vagrant.configure("2") do |config|
     echo "[all]" >> /home/vagrant/inventory    
     
     echo "[TASK 2] Populate both /etc/hosts and inventory"
-    echo "192.168.50.210 master master.com" >> /etc/hosts 
+    echo "172.42.42.100 master master.com" >> /etc/hosts 
     for((i=1; i<=$NUMBER_OF_WORKERS; i++));
     do
-      sudo echo "192.168.50.21$i worker$i" >> /etc/hosts
+      sudo echo "172.42.42.10$i worker$i worker$i.com" >> /etc/hosts
       echo "worker$i" >> /home/vagrant/inventory
     done
     

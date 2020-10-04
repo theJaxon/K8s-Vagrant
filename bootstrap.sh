@@ -44,25 +44,15 @@ swapoff -a
 
 # Add yum repo file for Kubernetes
 echo "[TASK 8] Add yum repo file for kubernetes"
-cat >>/etc/yum.repos.d/kubernetes.repo<<EOF
-[kubernetes]
-name=Kubernetes
-baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOF
+wget https://raw.githubusercontent.com/theJaxon/K8s-Vagrant/master/repo/kubernetes.repo -P /etc/yum.repos.d/
 
 # Install Kubernetes
 echo "[TASK 9] Install Kubernetes (kubeadm, kubelet and kubectl)"
-yum install -y -q kubeadm kubelet kubectl >/dev/null 2>&1
+yum install -y -q kubeadm kubelet kubectl --disableexcludes=kubernetes
 
 # Start and Enable kubelet service
 echo "[TASK 10] Enable and start kubelet service"
-systemctl enable kubelet >/dev/null 2>&1
-systemctl start kubelet >/dev/null 2>&1
+systemctl enable --now kubelet
 
 # Enable ssh password authentication
 echo "[TASK 11] Enable ssh password authentication"

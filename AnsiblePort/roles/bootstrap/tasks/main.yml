@@ -11,6 +11,7 @@
     - yum-utils
     - device-mapper-persistent-data
     - lvm2
+    - iproute-tc
     state: latest 
 
 - name: Add docker-ce and kubernetes repos 

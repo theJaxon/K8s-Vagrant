@@ -26,8 +26,8 @@
   
   rescue:
   - name: Initialize kubernetes cluster 
-    shell: "kubeadm init --apiserver-advertise-address=192.168.50.210 --pod-network-cidr=192.168.0.0/16 >> /home/vagrant/kubeinit.log"
-    async: 180 # wait for three minutes till timeout 
+    shell: "kubeadm init --apiserver-advertise-address=172.42.42.100 --cert-dir=/etc/kubernetes/pki --pod-network-cidr=192.168.0.0/16 >> /root/kubeinit.log"
+    async: 240 # wait for three minutes till timeout 
     poll: 20 # check every 20 seconds
     ignore_errors: True # continue tasks after timeout
     
