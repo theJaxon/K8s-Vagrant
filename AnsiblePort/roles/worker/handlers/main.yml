@@ -1,2 +1,5 @@
 ---
 # handlers file for worker
+- name: restart network service 
+  command: /etc/init.d/network restart
+  listen: restart network service 

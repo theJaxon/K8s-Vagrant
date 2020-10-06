@@ -1,10 +1,5 @@
 ---
 # tasks file for roles/bootstrap
-- name: Create ansible facts directory 
-  file: 
-    state: directory
-    path: /etc/ansible/facts.d 
-
 - name: Install required packages 
   yum:
     name:

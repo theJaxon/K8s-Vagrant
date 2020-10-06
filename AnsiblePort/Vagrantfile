@@ -5,8 +5,10 @@ Vagrant.configure("2") do |config|
   config.vm.box_check_update = false
   config.vm.provision "shell", inline: <<-SHELL
   # Install python on all machines
-  sudo yum module install -y python36 
-  sudo yum install -y epel-release && sudo yum install -y sshpass
+  yum module install -y python36 
+  yum install -y epel-release && sudo yum install -y sshpass bash-completion
+  # Create ansible local facts directory
+  mkdir -p -v /etc/ansible/facts.d
   SHELL
 
   (1..NUMBER_OF_WORKERS_TO_INT).each do |i|
@@ -14,6 +16,7 @@ Vagrant.configure("2") do |config|
       worker.vm.box = "bento/centos-8"
       worker.vm.hostname = "worker-#{i}"
       worker.vm.network "private_network", ip: "172.42.42.10#{i}"
+      VAGRANT_MACHINE_IP = ENV['VAGRANT_MACHINE_IP'] = "172.42.42.10#{i}"
       # Create & attach a 5GiB disk to each node machine
       file_for_disk = "./large_disk#{i}.vdi"
       worker.vm.provider "virtualbox" do |v|
@@ -27,13 +30,23 @@ Vagrant.configure("2") do |config|
       # Script for worker nodes 
       worker.vm.provision "shell", inline: <<-SHELL
       export NUMBER_OF_WORKERS=#{ENV['NUMBER_OF_WORKERS']} 
+      export VAGRANT_MACHINE_IP=#{ENV['VAGRANT_MACHINE_IP']}
       echo "Populating /etc/hosts"
       # Add Master node IP address
       echo "172.42.42.100 master master.com" >> /etc/hosts 
+      
+      # Add Private IP as a local fact 
+      # Check if file is already present
+      if [ ! -f /etc/ansible/facts.d/ip_address.fact ]
+      then 
+        echo "Writing ansible ip_address local fact"
+        echo "[worker]" >> /etc/ansible/facts.d/ip_address.fact
+        echo "ip = $VAGRANT_MACHINE_IP" >> /etc/ansible/facts.d/ip_address.fact
+      fi 
 
       for((i=1; i<=$NUMBER_OF_WORKERS; i++));
         do
-          sudo echo "172.42.42.10$i worker$i worker$i.com" >> /etc/hosts
+          echo "172.42.42.10$i worker$i worker$i.com" >> /etc/hosts
         done
       SHELL
       
@@ -82,7 +95,7 @@ Vagrant.configure("2") do |config|
       done
 
       # Download config file and run the playbook 
-      cd /home/vagrant && wget https://raw.githubusercontent.com/theJaxon/K8s-Vagrant/master/AnsiblePort/ansible.cfg
+      cd /home/vagrant && wget -nc https://raw.githubusercontent.com/theJaxon/K8s-Vagrant/master/AnsiblePort/ansible.cfg
       ansible-playbook /vagrant/K8s.yml
 
 VAGRANT_USER

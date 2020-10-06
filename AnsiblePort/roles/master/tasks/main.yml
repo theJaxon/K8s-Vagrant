@@ -14,6 +14,7 @@
     shell: 'kubectl cluster-info | sed "s/\x1B\[[0-9;]\{1,\}[A-Za-z]//g"' # The sed part is added to remove ANSI color codes from the output [1]
     register: kubernetes_status
     become: True 
+    become_method: sudo
     become_user: vagrant
 
   - name: check if kubernetes is up and running 
@@ -26,11 +27,22 @@
   
   rescue:
   - name: Initialize kubernetes cluster 
-    shell: "kubeadm init --apiserver-advertise-address=172.42.42.100 --cert-dir=/etc/kubernetes/pki --pod-network-cidr=192.168.0.0/16 >> /root/kubeinit.log"
-    async: 240 # wait for three minutes till timeout 
-    poll: 20 # check every 20 seconds
+    command: > 
+      kubeadm init 
+      --apiserver-advertise-address=172.42.42.100 
+      --cert-dir=/etc/kubernetes/pki 
+      --pod-network-cidr=192.168.0.0/16 
+      --kubernetes-version=stable-1.19
+      --ignore-preflight-errors=all
+    register: kubeadm_init_var
+    async: 300 # wait for five minutes till timeout 
+    poll: 5 # check every 5 seconds
     ignore_errors: True # continue tasks after timeout
-    
+
+- name: create kubeinit log file 
+  copy:
+    content:  "{{ kubeadm_init_var }}.stdout"  
+    dest: /home/vagrant/kubeinit.log 
 - name: create .kube directory 
   file:
     state: directory 
