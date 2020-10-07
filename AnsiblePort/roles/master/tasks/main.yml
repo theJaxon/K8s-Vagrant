@@ -41,7 +41,7 @@
 
 - name: create kubeinit log file 
   copy:
-    content:  "{{ kubeadm_init_var }}.stdout"  
+    content:  "{{ kubeadm_init_var }}"  
     dest: /home/vagrant/kubeinit.log 
 - name: create .kube directory 
   file:
