@@ -27,17 +27,9 @@
   
   rescue:
   - name: Initialize kubernetes cluster 
-    command: > 
-      kubeadm init 
-      --apiserver-advertise-address=172.42.42.100 
-      --cert-dir=/etc/kubernetes/pki 
-      --pod-network-cidr=192.168.0.0/16 
-      --kubernetes-version=stable-1.19
-      --ignore-preflight-errors=all
+    script: /vagrant/kubeadm_init.sh
     register: kubeadm_init_var
-    async: 300 # wait for five minutes till timeout 
-    poll: 5 # check every 5 seconds
-    ignore_errors: True # continue tasks after timeout
+    retries: 1
 
 - name: create kubeinit log file 
   copy:
