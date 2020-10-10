@@ -1,8 +1,10 @@
 # AnsiblePort 
 Deploy kubernetes cluster using vagrant with the help of ansible.
 
-### :x: Issues:
-1. After the initial configuration you have to do `systemctl restart network` on both `worker1` and `worker2` so that the InternalIP change, this is required because commands like `kubectl logs <pod-name>` fail without it, ansible can't restart the network successfully till now, i didn't figure a way out, although the handler triggers and it should restart, the IP doesn't change so it must be manually done.
+### :bangbang: WIP
+
+### Issues:
+1. After the initial configuration you have to do `systemctl restart network` on both `worker1` and `worker2` so that the Internal IP change, this is required because commands like `kubectl logs <pod-name>` fail without it, ansible can't restart the network successfully till now, i didn't figure a way out, although the handler triggers and it should restart, the IP doesn't change so it must be manually done.
 
 2. There are 2 commented lines found in the Vagrantfile as follows:
 ```bash

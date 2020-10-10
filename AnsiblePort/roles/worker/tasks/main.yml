@@ -1,25 +1,18 @@
 ---
 # tasks file for worker
-- name: Change BOOTPROTO to configure static IP address for {{ ansible_facts['hostname'] }}
-  lineinfile:
-    line: BOOTPROTO=static
-    regexp: "^BOOTPROTO="
-    path: "{{ netconf_file }}"
+#- name: Change BOOTPROTO to configure static IP address for {{ ansible_facts['hostname'] }}
+  #lineinfile:
+    #line: BOOTPROTO=static
+    #regexp: "^BOOTPROTO="
+    #path: "{{ netconf_file }}"
 
 - name: configure IP of the machine 
   blockinfile: 
     block: |
       IPADDR={{ ansible_facts['ansible_local']['ip_address']['worker']['ip'] }}
-      GATEWAY={{ gateway_ip }}
     path: "{{ netconf_file }}"
   changed_when: True 
   notify: restart network service 
-
-- name: Fix the default DROP behavior # https://stackoverflow.com/questions/46667659/kubernetes-cannot-access-nodeport-from-other-machines
-  iptables:
-    chain: FORWARD
-    jump: ACCEPT
-    comment: allow reaching to this node from other worker nodes
 
 - name: Join the cluster 
   shell: 'sshpass -p "kubeadmin" scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no master.com:/joincluster.sh /joincluster.sh 2>/dev/null'
