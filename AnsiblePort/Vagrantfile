@@ -33,12 +33,10 @@ Vagrant.configure("2") do |config|
       end
 
       # Script for worker nodes 
+      worker.vm.provision "shell", path: "worker_scripts/iptable_rule.sh"
       worker.vm.provision "shell", inline: <<-SHELL
       export NUMBER_OF_WORKERS=#{ENV['NUMBER_OF_WORKERS']} 
       export VAGRANT_MACHINE_IP=#{ENV['VAGRANT_MACHINE_IP']}
-      echo "[TASK 1] Fix Docker DROP behavior"
-      echo "sudo iptables -A FORWARD -j ACCEPT" >> /home/vagrant/.bash_profile
-
       echo "[TASK 2] Populating /etc/hosts"
       # Add Master node IP address
       echo "172.42.42.100 master master.com" >> /etc/hosts 
